@@ -1,9 +1,10 @@
 package com.zzq.core.tool.base
 
-import android.content.res.Configuration
 import android.graphics.drawable.Drawable
 import android.os.Bundle
+import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
 import androidx.annotation.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
@@ -12,9 +13,8 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.gyf.immersionbar.ImmersionBar
-import com.gyf.immersionbar.components.SimpleImmersionOwner
-import com.gyf.immersionbar.components.SimpleImmersionProxy
 import com.zzq.core.tool.R
+import com.zzq.core.tool.util.eLog
 
 /**
  * androidx
@@ -22,8 +22,7 @@ import com.zzq.core.tool.R
  * ImmersionBar
  * Navigation
  */
-abstract class BaseFragment(@LayoutRes contentLayoutId: Int) : Fragment(contentLayoutId),
-    SimpleImmersionOwner {
+abstract class BaseFragment(@LayoutRes contentLayoutId: Int) : Fragment(contentLayoutId) {
 
     protected var defaultToolbar: Toolbar? = null
 
@@ -38,19 +37,31 @@ abstract class BaseFragment(@LayoutRes contentLayoutId: Int) : Fragment(contentL
     protected open fun initView(view: View) {}
 
     /**
-     * 页面无[Toolbar]时，重写该方法，返回null
+     * 页面无[Toolbar]时，重写该方法，返回null，这里默认的id是toolbar，默认大多数情况下都会设置toolbar。
      */
     @IdRes
     @Nullable
     protected open fun setToolbarId(): Int? = R.id.toolbar
 
+    /**
+     * 固定传递View的方式仅能通过构造函数传递，子类不可重写该方法。
+     */
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
+        eLog("BaseFragment $this onCreateView")
+        return super.onCreateView(inflater, container, savedInstanceState)
+    }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        initImmersionBar()
         val toolbarId = setToolbarId()
         toolbarId?.let {
             defaultToolbar = view.findViewById(it)
             setToolbar(defaultToolbar!!)
-
         }
         initView(view)
     }
@@ -73,12 +84,10 @@ abstract class BaseFragment(@LayoutRes contentLayoutId: Int) : Fragment(contentL
         ImmersionBar.setTitleBar(this, toolbar)
     }
 
-    override fun initImmersionBar() {
-        val immersionBar = ImmersionBar.with(this)
-        if (ImmersionBar.isSupportStatusBarDarkFont()) {
-            immersionBar.statusBarDarkFont(true)
-        }
-        immersionBar.init();
+    protected open fun initImmersionBar() {
+        ImmersionBar.with(this)
+            .statusBarDarkFont(true)
+            .init()
     }
 
     /**
@@ -92,44 +101,5 @@ abstract class BaseFragment(@LayoutRes contentLayoutId: Int) : Fragment(contentL
 
     protected fun getDrawable(@DrawableRes id: Int): Drawable? {
         return ContextCompat.getDrawable(requireContext(), id)
-    }
-
-    /**
-     * ImmersionBar代理类
-     */
-    private val mSimpleImmersionProxy = SimpleImmersionProxy(this)
-    override fun setUserVisibleHint(isVisibleToUser: Boolean) {
-        super.setUserVisibleHint(isVisibleToUser)
-        mSimpleImmersionProxy.isUserVisibleHint = isVisibleToUser
-    }
-
-    override fun onActivityCreated(savedInstanceState: Bundle?) {
-        super.onActivityCreated(savedInstanceState)
-        mSimpleImmersionProxy.onActivityCreated(savedInstanceState)
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        mSimpleImmersionProxy.onDestroy()
-    }
-
-    override fun onHiddenChanged(hidden: Boolean) {
-        super.onHiddenChanged(hidden)
-        mSimpleImmersionProxy.onHiddenChanged(hidden)
-    }
-
-    override fun onConfigurationChanged(newConfig: Configuration) {
-        super.onConfigurationChanged(newConfig)
-        mSimpleImmersionProxy.onConfigurationChanged(newConfig)
-    }
-
-    /**
-     * 是否可以实现沉浸式，当为true的时候才可以执行initImmersionBar方法
-     * Immersion bar enabled boolean.
-     *
-     * @return the boolean
-     */
-    override fun immersionBarEnabled(): Boolean {
-        return true
     }
 }

@@ -9,6 +9,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
 import android.widget.TextView
+import androidx.core.view.isVisible
 import com.zzq.core.tool.base.BaseApplication
 import com.zzq.core.tool.base.BaseDialogFragment
 import com.zzq.core.tool.interfaces.ClickProxy
